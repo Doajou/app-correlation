@@ -29,42 +29,64 @@ mode = st.sidebar.radio("Mode d'affichage", ["Smartphone Élève", "Écran Proje
 if mode == "Smartphone Élève":
     st.title("📊 Trouvez la bonne valeur du $R^2$")
     
-    pseudo = st.text_input("Entrez votre Prénom (oui, le prénom, pas un pseudo):", key="user_pseudo")
+    # Vérification si l'élève a déjà soumis une réponse active
+    already_submitted = st.session_state.get("submitted_pseudo", None)
     
-    if pseudo:
-        st.subheader(f"Bonjour {pseudo} !")
-        st.write("Proposez une valeur de $R^2$ pour chaque graphique :")
+    # Si le classement a été réinitialisé par l'enseignant, on débloque l'élève
+    if already_submitted and already_submitted not in scores_db:
+        st.session_state.submitted_pseudo = None
+        already_submitted = None
+
+    # CAS 1 : L'élève a déjà envoyé ses réponses
+    if already_submitted and already_submitted in scores_db:
+        st.success(f"✅ Réponses enregistrées pour **{already_submitted}** !")
+        st.info(f"Votre score actuel : **{scores_db[already_submitted]} pts / 1000**.\n\nAttendez la réinitialisation du classement par l'enseignant pour rejouer.")
+    
+    # CAS 2 : L'élève n'a pas encore soumis
+    else:
+        pseudo = st.text_input("Entrez votre Prénom (oui, le prénom, pas un pseudo) :", key="user_pseudo")
         
-        estimations = []
-        
-        for i, item in enumerate(GRAPHIQUES):
-            st.markdown(f"### Graphique {i+1}")
+        if pseudo:
+            pseudo_clean = pseudo.strip()
             
-            try:
-                st.image(item["image"], use_container_width=True)
-            except Exception:
-                st.warning(f"Image '{item['image']}' non trouvée sur GitHub.")
-            
-            val = st.slider(
-                f"Estimation de $R^2$ (Graphique {i+1}) :", 
-                min_value=0.00, 
-                max_value=1.00, 
-                value=0.00, 
-                step=0.01, 
-                key=f"g_{i}"
-            )
-            estimations.append(val)
-            st.divider()
-        
-        if st.button("Envoyer mes réponses 🚀", type="primary"):
-            score_total = 0
-            for est, item in zip(estimations, GRAPHIQUES):
-                ecart = abs(est - item["vrai_r"])
-                pts = max(0, int(round(100 * (1 - ecart))))
-                score_total += pts
-            
-            scores_db[pseudo] = score_total
-            st.success(f"Réponses enregistrées ! Votre score total : **{score_total} pts / 1000**")
+            # Anti-triche : empêche d'utiliser le prénom d'un élève ayant déjà soumis
+            if pseudo_clean in scores_db:
+                st.warning(f"⚠️ Le prénom **{pseudo_clean}** a déjà envoyé ses réponses. Attendez le prochain tour !")
+            else:
+                st.subheader(f"Bonjour {pseudo_clean} !")
+                st.write("Proposez une valeur de $R^2$ pour chaque graphique :")
+                
+                estimations = []
+                for i, item in enumerate(GRAPHIQUES):
+                    st.markdown(f"### Graphique {i+1}")
+                    
+                    try:
+                        st.image(item["image"], use_container_width=True)
+                    except Exception:
+                        st.warning(f"Image '{item['image']}' non trouvée sur GitHub.")
+                    
+                    val = st.slider(
+                        f"Estimation de $R^2$ (Graphique {i+1}) :", 
+                        min_value=0.00, 
+                        max_value=1.00, 
+                        value=0.00, 
+                        step=0.01, 
+                        key=f"g_{i}"
+                    )
+                    estimations.append(val)
+                    st.divider()
+                
+                if st.button("Envoyer mes réponses 🚀", type="primary"):
+                    score_total = 0
+                    for est, item in zip(estimations, GRAPHIQUES):
+                        ecart = abs(est - item["vrai_r"])
+                        pts = max(0, int(round(100 * (1 - ecart))))
+                        score_total += pts
+                    
+                    # Enregistrement du score et verrouillage de la session
+                    scores_db[pseudo_clean] = score_total
+                    st.session_state.submitted_pseudo = pseudo_clean
+                    st.rerun()
 
 # ---------------------------------------------------------
 # MODE 2 : ÉCRAN PROJETÉ (VIDÉOPROJECTEUR)
@@ -78,7 +100,7 @@ else:
             columns=["Élève", "Score Total (/1000)"]
         )
         df = df.sort_values(by="Score Total (/1000)", ascending=False).reset_index(drop=True)
-        df.index += 1  # Rang à partir de 1
+        df.index += 1
         
         st.dataframe(df, use_container_width=True, height=400)
     else:
