@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import time
 
 # Configuration de la page
 st.set_page_config(page_title="Guess the Correlation", layout="wide")
@@ -36,7 +35,7 @@ if mode == "Smartphone Élève":
     
     already_submitted = st.session_state.get("submitted_pseudo", None)
     
-    # Si le classement a été réinitialisé, on débloque l'élève
+    # Si le classement a été réinitialisé par l'enseignant, on débloque l'élève
     if already_submitted and already_submitted not in db["scores"]:
         st.session_state.submitted_pseudo = None
         already_submitted = None
@@ -46,43 +45,49 @@ if mode == "Smartphone Élève":
         st.header("📝 Correction détaillée")
         
         if already_submitted and already_submitted in db["responses"]:
-            st.subheader(f"Résultats de **{already_submitted}** (Score : {db['scores'][already_submitted]} pts)")
+            score_eleve = db["scores"][already_submitted]
+            st.success(f"Score total pour **{already_submitted}** : **{score_eleve} pts / 1000**")
+            st.divider()
             
             user_res = db["responses"][already_submitted]
-            data_corr = []
+            
+            # Affichage graphique par graphique (format identique à la saisie)
             for i, item in enumerate(GRAPHIQUES):
+                st.markdown(f"### Graphique {i+1}")
+                
+                # Image
+                try:
+                    st.image(item["image"], use_container_width=True)
+                except Exception:
+                    st.warning(f"Image '{item['image']}' non trouvée.")
+                
                 est = user_res[i]
                 vrai = item["vrai_r"]
                 ecart = abs(est - vrai)
                 pts = max(0, int(round(100 * (1 - ecart))))
-                data_corr.append({
-                    "Graphique": f"G{i+1}",
-                    "Votre réponse": f"{est:.2f}",
-                    "Vraie valeur R²": f"{vrai:.2f}",
-                    "Écart": f"{ecart:.2f}",
-                    "Points": f"{pts} pts"
-                })
-            
-            st.dataframe(pd.DataFrame(data_corr), use_container_width=True, hide_index=True)
+                
+                # Métriques visuelles
+                col1, col2, col3 = st.columns(3)
+                col1.metric("Votre réponse", f"{est:.2f}")
+                col2.metric("Vraie valeur", f"{vrai:.2f}")
+                col3.metric("Points", f"+{pts} pts")
+                
+                st.divider()
         else:
             st.info("La correction est affichée au tableau. Vous n'avez pas soumis de réponses pour cette session.")
 
     # CAS 2 : ÉLÈVE AYANT DÉJÀ SOUMIS (EN ATTENTE DE CORRECTION)
     elif already_submitted and already_submitted in db["scores"]:
         st.success(f"✅ Réponses enregistrées pour **{already_submitted}** !")
-        st.info(f"Votre score actuel : **{db['scores'][already_submitted]} pts / 1000**.\n\nEn attente de la correction par l'enseignant...")
+        st.info(f"Votre score actuel : **{db['scores'][already_submitted]} pts / 1000**.\n\nEn attente du lancement de la correction par l'enseignant...")
         
-        # Bouton manuel si l'élève est impatient + rechargement automatique
-        if st.button("🔄 Vérifier si la correction est disponible"):
-            st.rerun()
-            
-        # Script d'auto-rafraîchissement léger toutes les 3 secondes en arrière-plan
+        # Script d'auto-rafraîchissement automatique toutes les 2 secondes
         st.components.v1.html(
             """
             <script>
                 setTimeout(function(){
                     window.parent.postMessage({type: 'streamlit:rerun'}, '*');
-                }, 3000);
+                }, 2000);
             </script>
             """,
             height=0
