@@ -5,7 +5,7 @@ import pandas as pd
 st.set_page_config(page_title="Guess the Correlation", layout="wide")
 
 # Paramètres de la partie (À modifier selon vos graphiques)
-VRAIS_R = [0.82, -0.45, 0.15, -0.90]  # Vos valeurs réelles
+VRAIS_R = [0.33, 0.53, 0.58, 0.41, 0.73, 0.99, 0.78, 0.64, 0.03, 0.26]  # Vos valeurs réelles
 NB_QUESTIONS = len(VRAIS_R)
 
 # ---------------------------------------------------------
@@ -25,9 +25,9 @@ mode = st.sidebar.radio("Mode d'affichage", ["Smartphone Élève", "Écran Proje
 # MODE 1 : INTERFACE SMARTPHONE ÉLÈVE
 # ---------------------------------------------------------
 if mode == "Smartphone Élève":
-    st.title("📊 Guess the Correlation")
+    st.title("📊 Trouvez la bonne valeur du $R^2$")
     
-    pseudo = st.text_input("Entrez votre Prénom ou Pseudo :", key="user_pseudo")
+    pseudo = st.text_input("Entrez votre Prénom (oui, le prénom, pas un pseudo):", key="user_pseudo")
     
     if pseudo:
         st.subheader(f"Bonjour {pseudo} !")
@@ -37,7 +37,7 @@ if mode == "Smartphone Élève":
         for i in range(NB_QUESTIONS):
             val = st.slider(
                 f"Graphique {i+1} :", 
-                min_value=-1.00, 
+                min_value=0.00, 
                 max_value=1.00, 
                 value=0.00, 
                 step=0.01, 
