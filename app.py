@@ -71,7 +71,7 @@ if mode == "Smartphone Élève":
         st.success(f"✅ Réponses enregistrées pour **{already_submitted}** !")
         st.info(f"Votre score actuel : **{db['scores'][already_submitted]} pts / 1000**.\n\nEn attente de la correction par l'enseignant...")
 
-    # CAS 3 : FORMULAIRE DE Saisie
+    # CAS 3 : FORMULAIRE DE SAISIE
     else:
         pseudo = st.text_input("Entrez votre Prénom (oui, le prénom, pas un pseudo) :", key="user_pseudo")
         
@@ -163,7 +163,7 @@ else:
             corr_summary = []
             for i, item in enumerate(GRAPHIQUES):
                 vrai = item["vrai_r"]
-                moy_class = moyennes[i]
+                moy_class = moyennes.iloc[i]  # Fix du KeyError
                 ecart_moyen = abs(moy_class - vrai)
                 corr_summary.append({
                     "Graphique": f"Graphique {i+1}",
