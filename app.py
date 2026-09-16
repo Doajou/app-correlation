@@ -24,6 +24,14 @@ def get_global_database():
 
 db = get_global_database()
 
+# Fragment qui boucle toutes les 2s tant que la correction n'est pas activée
+@st.fragment(run_every=2)
+def waiting_screen_fragment():
+    if db["show_correction"]:
+        st.rerun()  # Recharge la page entière dès que le bouton est cliqué au tableau
+    else:
+        st.info("🕒 En attente du lancement de la correction par l'enseignant...")
+
 # Barre latérale : Commutateur Vue Élève / Vue Enseignant
 mode = st.sidebar.radio("Mode d'affichage", ["Smartphone Élève", "Écran Projeté (Classement)"])
 
@@ -55,7 +63,6 @@ if mode == "Smartphone Élève":
             for i, item in enumerate(GRAPHIQUES):
                 st.markdown(f"### Graphique {i+1}")
                 
-                # Image
                 try:
                     st.image(item["image"], use_container_width=True)
                 except Exception:
@@ -66,7 +73,6 @@ if mode == "Smartphone Élève":
                 ecart = abs(est - vrai)
                 pts = max(0, int(round(100 * (1 - ecart))))
                 
-                # Métriques visuelles
                 col1, col2, col3 = st.columns(3)
                 col1.metric("Votre réponse", f"{est:.2f}")
                 col2.metric("Vraie valeur", f"{vrai:.2f}")
@@ -79,19 +85,10 @@ if mode == "Smartphone Élève":
     # CAS 2 : ÉLÈVE AYANT DÉJÀ SOUMIS (EN ATTENTE DE CORRECTION)
     elif already_submitted and already_submitted in db["scores"]:
         st.success(f"✅ Réponses enregistrées pour **{already_submitted}** !")
-        st.info(f"Votre score actuel : **{db['scores'][already_submitted]} pts / 1000**.\n\nEn attente du lancement de la correction par l'enseignant...")
+        st.info(f"Votre score actuel : **{db['scores'][already_submitted]} pts / 1000**.")
         
-        # Script d'auto-rafraîchissement automatique toutes les 2 secondes
-        st.components.v1.html(
-            """
-            <script>
-                setTimeout(function(){
-                    window.parent.postMessage({type: 'streamlit:rerun'}, '*');
-                }, 2000);
-            </script>
-            """,
-            height=0
-        )
+        # Le fragment surveille en tâche de fond toutes les 2s
+        waiting_screen_fragment()
 
     # CAS 3 : FORMULAIRE DE SAISIE
     else:
