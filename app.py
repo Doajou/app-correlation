@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 # Configuration de la page
-st.set_page_config(page_title="Guess the Correlation", layout="wide")
+st.set_page_config(page_title="Guess the Correlation - online version", layout="wide")
 
 # Paramètres de la partie (10 graphiques en .png)
 VRAIS_R2 = [0.33, 0.53, 0.58, 0.41, 0.73, 0.99, 0.78, 0.64, 0.03, 0.26]
@@ -30,7 +30,7 @@ def waiting_screen_fragment():
     if db["show_correction"]:
         st.rerun()  # Recharge la page entière dès que le bouton est cliqué au tableau
     else:
-        st.info("🕒 En attente du lancement de la correction par l'enseignant...")
+        st.info("🕒 En attente du lancement de la correction par votre prof de maths préféré")
 
 # Barre latérale : Commutateur Vue Élève / Vue Enseignant
 mode = st.sidebar.radio("Mode d'affichage", ["Smartphone Élève", "Écran Projeté (Classement)"])
@@ -75,7 +75,7 @@ if mode == "Smartphone Élève":
                 
                 col1, col2, col3 = st.columns(3)
                 col1.metric("Votre réponse", f"{est:.2f}")
-                col2.metric("Vraie valeur", f"{vrai:.2f}")
+                col2.metric("Réponse correcte", f"{vrai:.2f}")
                 col3.metric("Points", f"+{pts} pts")
                 
                 st.divider()
@@ -92,7 +92,7 @@ if mode == "Smartphone Élève":
 
     # CAS 3 : FORMULAIRE DE SAISIE
     else:
-        pseudo = st.text_input("Entrez votre Prénom (oui, le prénom, pas un pseudo) :", key="user_pseudo")
+        pseudo = st.text_input("Entrez votre prénom (oui, le prénom, pas un pseudo) :", key="user_pseudo")
         
         if pseudo:
             pseudo_clean = pseudo.strip()
@@ -172,7 +172,7 @@ else:
     # SECTION CORRECTION AU TABLEAU
     if db["show_correction"]:
         st.divider()
-        st.subheader("📊 Correction générale (Moyenne de la classe vs Vraie valeur)")
+        st.subheader("📊 Correction générale (Moyenne de la classe et bonne valeur)")
         
         if db["responses"]:
             all_resp = list(db["responses"].values())
