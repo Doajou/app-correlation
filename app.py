@@ -1,23 +1,28 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 
 # Configuration de la page
 st.set_page_config(page_title="Guess the Correlation", layout="wide")
 
 # Paramètres de la partie (À modifier selon vos graphiques)
-VRAIS_R = [0.82, -0.45, 0.15, -0.90]  # Vos valeurs réelles pour chaque graphique
+VRAIS_R = [0.82, -0.45, 0.15, -0.90]  # Vos valeurs réelles
 NB_QUESTIONS = len(VRAIS_R)
 
-# Initialisation de la base de données en mémoire
-if "scores_db" not in st.session_state:
-    st.session_state.scores_db = {}
+# ---------------------------------------------------------
+# STOCKAGE CENTRALISÉ (PARTAGÉ ENTRE TOUS LES APPAREILS)
+# ---------------------------------------------------------
+@st.cache_resource
+def get_global_database():
+    # Ce dictionnaire est partagé par tous les utilisateurs de l'application
+    return {}
+
+scores_db = get_global_database()
 
 # Barre latérale : Commutateur Vue Élève / Vue Enseignant
 mode = st.sidebar.radio("Mode d'affichage", ["Smartphone Élève", "Écran Projeté (Classement)"])
 
 # ---------------------------------------------------------
-# MODE 1 : INTERFACE SmartPhone ÉLÈVE
+# MODE 1 : INTERFACE SMARTPHONE ÉLÈVE
 # ---------------------------------------------------------
 if mode == "Smartphone Élève":
     st.title("📊 Guess the Correlation")
@@ -48,8 +53,8 @@ if mode == "Smartphone Élève":
                 pts = max(0, int(round(100 * (1 - ecart))))
                 score_total += pts
             
-            # Sauvegarde du score de l'élève
-            st.session_state.scores_db[pseudo] = score_total
+            # Sauvegarde dans la base partagée
+            scores_db[pseudo] = score_total
             st.success(f"Réponses enregistrées ! Votre score total : **{score_total} pts**")
 
 # ---------------------------------------------------------
@@ -58,14 +63,14 @@ if mode == "Smartphone Élève":
 else:
     st.title("🏆 Classement en direct")
     
-    if st.session_state.scores_db:
-        # Conversion du dictionnaire en DataFrame Pandas
+    if scores_db:
+        # Conversion du dictionnaire partagé en DataFrame Pandas
         df = pd.DataFrame(
-            list(st.session_state.scores_db.items()), 
+            list(scores_db.items()), 
             columns=["Élève", "Score Total"]
         )
         df = df.sort_values(by="Score Total", ascending=False).reset_index(drop=True)
-        df.index += 1  # Pour commencer le rang à 1 au lieu de 0
+        df.index += 1  # Rang à partir de 1
         
         st.dataframe(df, use_container_width=True, height=400)
     else:
