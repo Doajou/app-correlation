@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import time
 
 # Configuration de la page
 st.set_page_config(page_title="Guess the Correlation", layout="wide")
@@ -70,6 +71,22 @@ if mode == "Smartphone Élève":
     elif already_submitted and already_submitted in db["scores"]:
         st.success(f"✅ Réponses enregistrées pour **{already_submitted}** !")
         st.info(f"Votre score actuel : **{db['scores'][already_submitted]} pts / 1000**.\n\nEn attente de la correction par l'enseignant...")
+        
+        # Bouton manuel si l'élève est impatient + rechargement automatique
+        if st.button("🔄 Vérifier si la correction est disponible"):
+            st.rerun()
+            
+        # Script d'auto-rafraîchissement léger toutes les 3 secondes en arrière-plan
+        st.components.v1.html(
+            """
+            <script>
+                setTimeout(function(){
+                    window.parent.postMessage({type: 'streamlit:rerun'}, '*');
+                }, 3000);
+            </script>
+            """,
+            height=0
+        )
 
     # CAS 3 : FORMULAIRE DE SAISIE
     else:
@@ -163,7 +180,7 @@ else:
             corr_summary = []
             for i, item in enumerate(GRAPHIQUES):
                 vrai = item["vrai_r"]
-                moy_class = moyennes.iloc[i]  # Fix du KeyError
+                moy_class = moyennes.iloc[i]
                 ecart_moyen = abs(moy_class - vrai)
                 corr_summary.append({
                     "Graphique": f"Graphique {i+1}",
