@@ -44,7 +44,7 @@ if mode == "Smartphone Élève":
     
     # CAS 2 : L'élève n'a pas encore soumis
     else:
-        pseudo = st.text_input("Entrez votre Prénom (oui, le prénom, pas un pseudo) :", key="user_pseudo")
+        pseudo = st.text_input("Entrez votre prénom et la première lettre de votre nom (pas de pseudo) :", key="user_pseudo")
         
         if pseudo:
             pseudo_clean = pseudo.strip()
