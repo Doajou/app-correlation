@@ -16,7 +16,6 @@ GRAPHIQUES = [
 # ---------------------------------------------------------
 @st.cache_resource
 def get_global_database():
-    # Ce dictionnaire est partagé par tous les utilisateurs de l'application
     return {}
 
 scores_db = get_global_database()
@@ -38,11 +37,9 @@ if mode == "Smartphone Élève":
         
         estimations = []
         
-        # Boucle sur les 10 graphiques avec leurs images .png
         for i, item in enumerate(GRAPHIQUES):
             st.markdown(f"### Graphique {i+1}")
             
-            # Affichage de l'image .png
             try:
                 st.image(item["image"], use_container_width=True)
             except Exception:
@@ -60,14 +57,12 @@ if mode == "Smartphone Élève":
             st.divider()
         
         if st.button("Envoyer mes réponses 🚀", type="primary"):
-            # Calcul du score global (100 pts x 10 graphiques = 1000 pts max)
             score_total = 0
             for est, item in zip(estimations, GRAPHIQUES):
                 ecart = abs(est - item["vrai_r"])
                 pts = max(0, int(round(100 * (1 - ecart))))
                 score_total += pts
             
-            # Sauvegarde dans la base partagée
             scores_db[pseudo] = score_total
             st.success(f"Réponses enregistrées ! Votre score total : **{score_total} pts / 1000**")
 
@@ -78,7 +73,6 @@ else:
     st.title("🏆 Classement en direct")
     
     if scores_db:
-        # Conversion du dictionnaire partagé en DataFrame Pandas
         df = pd.DataFrame(
             list(scores_db.items()), 
             columns=["Élève", "Score Total (/1000)"]
@@ -90,5 +84,11 @@ else:
     else:
         st.info("En attente des premières réponses des élèves...")
     
-    if st.button("🔄 Rafraîchir le classement"):
-        st.rerun()
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("🔄 Rafraîchir le classement"):
+            st.rerun()
+    with col2:
+        if st.button("🗑️ Réinitialiser le classement"):
+            scores_db.clear()
+            st.rerun()
